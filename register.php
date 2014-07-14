@@ -18,6 +18,7 @@ if ( isset($_POST['submit-form']) ) {
 	$password_confirm = $_POST['password-confirm'];
 	$email = $_POST['email'];
 
+
 	// form validation variable init
 	$success = true;
 	$userTools = new UserTools();

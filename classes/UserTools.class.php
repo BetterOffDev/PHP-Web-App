@@ -10,10 +10,16 @@ class UserTools {
 	public function login($username, $password) {
 
 		$hashedPassword = md5($password);
-		$result = mysql_query("SELECT * FROM users WHERE username = '$username' AND password = '$hashedPassword'");
+		$database = new DB();
+		$database->query('SELECT * FROM users WHERE username = :username AND password = :password');
 
-		if (mysql_num_rows($result) == 1) {
-			$_SESSION['user'] = serialize(new User(mysql_fetch_assoc($result)));
+		$database->bind(':username', $username);
+		$database->bind(':password', $hashedPassword);
+
+		$user = $database->single();
+
+		if ( $database->rowCount() == 1) {
+			$_SESSION['user'] = serialize( new User($user) );
 			$_SESSION['login_time'] = time();
 			$_SESSION['logged_in'] = 1;
 			return true;
@@ -34,8 +40,14 @@ class UserTools {
 
 	// check if username already exists
 	public function checkUsernameExists($username) {
-		$result = mysql_query("SELECT id FROM users WHERE username='$username'");
-		if (mysql_num_rows($result) == 0) {
+		$database = new DB();
+		$database->query('SELECT * FROM users WHERE username = :username');
+
+		$database->bind(':username', $username);
+
+		$database->execute();
+
+		if ($database->rowCount() == 0) {
 			return false;
 		}
 		else {
@@ -45,10 +57,14 @@ class UserTools {
 
 	// get user
 	public function get($id) {
-		$db = new DB();
-		$result = $db->select('users', "id = $id");
+		$database = new DB();
+		$database->query('SELECT * FROM users WHERE id = :id');
 
-		return new User($result);
+		$database->bind(':id', $id);
+
+		$user = $database->single();
+
+		return new User($user);
 	}
 
 	

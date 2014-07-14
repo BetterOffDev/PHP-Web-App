@@ -1,89 +1,110 @@
 <?php
-//DB.class.php
 
-class DB {
-	
-	protected $db_name = 'php_web_app';
+class DB{
+  
+    protected $db_name = 'php_web_app';
 	protected $db_user = 'web_app_user';
 	protected $db_pass = 'webapppass!';
 	protected $db_host = 'localhost';
+ 
+    private $dbh;
+    private $error;
 
-	public function connect() {
+    private $stmt;
+ 
+    public function __construct(){
+        // Set DSN
+        $dsn = 'mysql:host=' . $this->host . ';dbname=' . $this->dbname;
+        // Set options
+        $options = array(
+            PDO::ATTR_PERSISTENT    => true,
+            PDO::ATTR_ERRMODE       => PDO::ERRMODE_EXCEPTION
+        );
+        // Create a new PDO instanace
+        try{
+            $this->dbh = new PDO($dsn, $this->user, $this->pass, $options);
+        }
+        // Catch any errors
+        catch(PDOException $e){
+            $this->error = $e->getMessage();
+        }
+    }
+
+    public function query($query){
+	    $this->stmt = $this->dbh->prepare($query);
+	}
+
+
+	public function bind($param, $value, $type = null){
 		
-		$connection = mysql_connect($this->db_host, $this->db_user, $this->db_pass);
-		mysql_select_db($this->db_name);
-
-		return true;
-
-
-		// PDO connection
-
-		/*try {
-			$DBH = new PDO("mysql:host=$db_host;dbname=$db_name", $db_user, $db_pass);
-			$DBH->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
+		if (is_null($type)) {
+  			switch (true) {
+    			case is_int($value):
+      			$type = PDO::PARAM_INT;
+      			break;
+    			
+    			case is_bool($value):
+      			$type = PDO::PARAM_BOOL;
+      			break;
+    
+    			case is_null($value):
+      			$type = PDO::PARAM_NULL;
+      			break;
+    
+    			default:
+      			$type = PDO::PARAM_STR;
+  			}
 		}
 
-		catch {
-			(PDOException, $e) {
-				echo $e->getMessage();
-			}
-		}*/
-	}
-
-	public function processsRowSet($rowSet, $singleRow=false) {
-		
-		$resultArray = array();
-		
-		while ($row = mysql_fetch_assoc($rowSet)) {
-			array_push($resultArray, $row);
-		}
-
-		if ($single_row === true)
-			return $resultArray[0];
-		
-
-		return $resultArray;
-	}
-
-	public function select($table, $where) {
-		$sql = "SELECT * FROM $table WHERE $where";
-		$result = mysql_query($sql);
-
-		if (mysql_num_rows($result) == 1)
-			return $this->processRowSet($result, true);
-
-		return $this->processRowSet($result);
-	}
-
-	public function update($data, $table, $where) {
-		foreach ($data as $column => $value) {
-			$sql = "UPDATE $table SET $column = $value WHERE $where";
-			mysql_query($sql) or die(mysql_error());
-		}
-
-		return true;
-	}
-
-	public function insert($data, $table) {
-
-		$columns = "";
-		$values = "";
-
-		foreach ($data as $column => $value) {
-			$columns .= ($columns == "") ? "" : ", ";
-			$columns .= $column;
-			$values .= ($values == "") ? "" : ", ";
-			$values .= $value;
-		}
-
-		$sql = "INSERT INTO $table ($columns) VALUES ($values)";
-
-		mysql_query($sql) or die(mysql_error());
-
-		return mysql_insert_id();
+		$this->stmt->bindValue($param, $value, $type);
 	}
 
 
-} // end of DB Class
+	public function execute(){
+	    return $this->stmt->execute();
+	}
+
+
+	public function resultset(){
+	    $this->execute();
+	    return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+
+	public function single(){
+	    $this->execute();
+	    return $this->stmt->fetch(PDO::FETCH_ASSOC);
+	}
+
+
+	public function rowCount(){
+	    return $this->stmt->rowCount();
+	}
+
+
+	public function lastInsertId(){
+	    return $this->dbh->lastInsertId();
+	}
+
+
+	public function beginTransaction(){
+	    return $this->dbh->beginTransaction();
+	}
+
+
+	public function endTransaction(){
+	    return $this->dbh->commit();
+	}
+
+
+	public function cancelTransaction(){
+	    return $this->dbh->rollBack();
+	}
+
+	public function debugDumpParams(){
+	    return $this->stmt->debugDumpParams();
+	}
+
+}
 
 ?>

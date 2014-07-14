@@ -21,30 +21,45 @@ class User {
 
 	public function save($isNewUser = false) {
 
-		$db = new DB();
-
 		// update user info if user is already registered
 		if (!$isNewUser) {
 			$data = array(
-				"username" => "'$this->username'",
-				"password" => "'$this->hashedPassword'",
-				"email" => "'$this->email'"
+				"username" => $this->username,
+				"password" => $this->hashedPassword,
+				"email" => $this->email,
+				"id" => $this->id
 			);
 
-			$db->update($data, 'users', 'id = '.$this->id);
+			$database = new DB();
+			$database->query('UPDATE users SET username = :username, password = :password, email = :email WHERE id = :id');
+
+			$database->bind(':id', $this->id);
+			$database->bind(':username', $this->username);
+			$database->bind(':email', $this->email);
+			$database->bind(':password', $this->hashedPassword);
+
+			$database->execute();
 		}
 
 		// add new user
 		else {
 			$data = array(
-				"username" => "'$this->username'",
-				"password" => "'$this->hashedPassword'",
-				"email" => "'$this->email'",
-				"join_date" => "'".date("Y-m-d H:i:s", time())."'"
+				"username" => $this->username,
+				"password" => $this->hashedPassword,
+				"email" => $this->email,
+				"join_date" => date("Y-m-d H:i:s", time())
 			);
-
-			$this->id = $db->insert($data, 'users');
 			$this->joinDate = time();
+
+			$database = new DB();
+			$database->query('INSERT INTO users (username, password, email, join_date) VALUES (:username, :password, :email, :join_date)');
+
+			$database->bind(':username', $this->username);
+			$database->bind(':email', $this->email);
+			$database->bind(':password', $this->hashedPassword);
+			$database->bind(':join_date', $this->joinDate );
+
+			$database->execute();
 		}
 		return true;
 	}
