@@ -5,4 +5,4 @@ Basic PHP/MySQL web app using OOP
 
 Built on Twitter Bootstrap so I didn't have to spend any real time creating layout CSS
 
-Currently changing traditional mysql_connect to new PDO standards for safer/better database connections
+Basic CRUD application using PDO for database connection rather than tradition my_sql_connect crap that can lead to SQL injection nightmares!
